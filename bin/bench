@@ -33,7 +33,7 @@ var minifiers = {
     return new CleanCSS({ processImport: false }).minify(source);
   },
   'clean-css (advanced off)': function(source) {
-    return new CleanCSS({ noAdvanced: true, processImport: false }).minify(source);
+    return new CleanCSS({ advanced: false, processImport: false }).minify(source);
   },
   'css-condense': function(source) {
     return cssCondense.compress(source, { safe: true });
