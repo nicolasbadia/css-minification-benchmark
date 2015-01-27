@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+
+// run it as ./bin/minify <name-of-minifier-from-minifiers-hash-below>
+// it will minify all files under 'data' into 'test' folder
+// if you run `git add .` and rerun this script with different minifier
+// you will be able to see differences between minified files with `git diff`
+
+var CleanCSS = require('clean-css');
+var cssCondense = require('css-condense');
+var csso = require('csso');
+var cssshrink = require('cssshrink');
+var csswring = require('csswring');
+var moreCss = require('more-css');
+var ncss = require('ncss');
+var sqwish = require('sqwish');
+var ycssmin = require('ycssmin');
+
+var fs = require('fs');
+var path = require('path');
+
+var lineBreak = process.platform == 'win32' ? '\r\n' : '\n';
+
+// MINIFIERS
+var minifiers = {
+  'clean-css': function(source) {
+    return new CleanCSS({ processImport: false }).minify(source);
+  },
+  'clean-css (advanced off)': function(source) {
+    return new CleanCSS({ noAdvanced: true, processImport: false }).minify(source);
+  },
+  'css-condense': function(source) {
+    return cssCondense.compress(source, { safe: true });
+  },
+  'csso': csso.justDoIt,
+  'csso (reordering off)': function(source) {
+    return csso.justDoIt(source, true);
+  },
+  'cssshrink': cssshrink.shrink,
+  'csswring': function (source) {
+     return csswring.wring(source).css;
+  },
+  'more-css': function(source) {
+    return moreCss.compress(source, true);
+  },
+  'ncss': ncss,
+  'sqwish': sqwish.minify,
+  'ycssmin': ycssmin.cssmin
+};
+
+// ARGUMENTS
+var minifyWith = process.argv.pop();
+var minify = minifiers[minifyWith];
+
+if (!minify) {
+  process.exit(1);
+}
+
+try {
+  fs.mkdirSync('test');
+} catch(e) {
+  if ( e.code != 'EEXIST' ) throw e;
+}
+
+fs.readdirSync('data').forEach(function (filename) {
+  var source = fs.readFileSync(path.join('data', filename), 'utf8');
+  var minified = minify(source).replace(/\}/g, '}' + lineBreak);
+
+  fs.writeFileSync(path.join('test', filename), minified);
+});
